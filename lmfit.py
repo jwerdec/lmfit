@@ -7,9 +7,11 @@
 #   Version History:
 #
 #   v0.1 2013-05-21: First more or less fully functional version
+#   v0.2 2013-06-16: Clean up and restructuring of the code
 
+from __future__ import division
 import numpy as np
-from numpy import sqrt, array
+from numpy import sqrt, array, sum
 import matplotlib.pylab as plt
 from matplotlib.mlab import normpdf
 import matplotlib.gridspec as gs
@@ -21,9 +23,10 @@ class lmfit(object):
     employing the Levenberg-Marqurdt algorithm.
     
     Resulting fitting parameters can be accessed via self.pvec or individually
-    via self.pvec['name of parameter']
+    via self.pvec['name of parameter'].
     """
-    def __init__(self, func, xdata, ydata, yerror=None, p0={}, lmoptions={}, verbose=True, plot=False):
+    def __init__(self, func, xdata, ydata, p0, yerror=None, lm_options={}, verbose=True, \
+    		plot=False, plot_options={}):
         """
         Constructor of class lmfit.
         Parameters:
@@ -31,7 +34,7 @@ class lmfit(object):
         xdata, ydata: Lists or 1D-Arrays of the same length containing the \\
         	data points
         yerror:  	  List or 1D-Array of the same length as ydata containing\\
-        	weights to the individual ydata points. None (default value) weights \\
+        	weights to the individual ydata points. None (default) weights \\
         	every y value equally
         p0:			  Dictionary of the parameters in func to optimize
         lmoptions:	  Options passed to scipy.optimize.leastsq function, cf. \\
@@ -39,112 +42,84 @@ class lmfit(object):
         verbose:	  Prints a full report on every fit (default: True)
         plot:		  Generates Plots to analyze the fit
         """
-        self.__lmoptions = lmoptions
-        self.__verbose = verbose
-        self.__plot = plot
-        if p0 == {}:
-            print "Error in fit.__init__(): No initial parameters p0 given."
-            return(0)  
-        self.__pnames = p0.keys()
-        self.pvec = p0.values()
-        self.__p0 = p0
-        if len(xdata) != len(ydata):
-            print "Error in fit.__init__(): Inconsistent number of data points in xdata and ydata."
-            return(0)
-        self.__func = func
-        self.__xdata = xdata
-        self.__ydata = ydata
-        self.__yerror = yerror
+        # Checking input
+        self.__reclength = len(xdata)
+        if self.__reclength != len(ydata):
+            raise Exception('Inconsistent number of data points in xdata and ydata!')
+			
         if yerror == None:
-            self.__weight = array([1 for i in xdata])
+            self.__ToMinimize = self.__Residuals
+        elif self.__reclength == len(yerror):
+            self.__ToMinimize = self.__WeightedResiduals
         else:
-            self.__weight = yerror
-        self.fit()
+            raise Exception('Inconsistent number of data points in data and yerror!')
+                
+        self.__p0 = p0
+        self.__func = func
+        self.__x = xdata
+        self.__y = ydata
+        self.__yerror = yerror
+        self.__ndf = self.__reclength - len(self.__p0)
+        self.fit(p0, lm_options, verbose, plot, plot_options)
 
-    def __chi2(self, pvec):
-        """
-        Returns the value of chi^2.
-        """
-        chi2 = 0
-        params = dict(zip(self.__pnames, pvec))
-        i = 0
-        for x in self.__xdata:
-            chi2 +=\
-                ((self.__ydata[i] - self.__func(x, **params))/ \
-                     self.__weight[i])**2
-            i += 1
-        return chi2
+    # PRIVATE METHODS
 
-    def __pdict(self, pvec):
-    	"""
-    	Creates a dictionary containing the fitting parameters
-    	"""
-        return dict(zip(self.__pnames, pvec))
+    def __ToMinimize(self, params):
+        pass
 
-    def __wr(self, pvec):
-        """
-        Defines the set of equations whose sum of squares is minimized
-        through the least squares algorithm.
-        """
-        return ((self.__ydata - self.__func(self.__xdata,\
-                                                **self.__pdict(pvec))) / \
-                    self.__weight)
+    def __Residuals(self, params):
+        return(self.__y - self.__func(self.__x, *params))
 
-    def __residualvariance(self):
-        """
-        Calculates the variance of residuals (chi^2 / ndf) (reduced chi^2).
-        """
-        return (self.__chi2(self.pvec) / self.__ndf())
+    def __WeightedResiduals(self, params):
+        return(self.__y - self.__func(self.__x, *params)/self.__yerror)
 
-    def __ndf(self):
-        """
-        Calculates the number of degree of freedom (N - n) where N the
-        number of data points and n is the number of parameters.
-        """
-        return (len(self.__xdata) - len(self.pvec))
-
-    def fit(self):
-        """
-  		Carries out the least squares optimization.
-        """
-        lm = leastsq(func=self.__wr,\
-                         x0=self.pvec,\
-                         full_output=1,\
-                         **self.__lmoptions)
-        if 4 < lm[4] < 1:
-            print "Error: No solution found. Error message provided by \
-            	 scipy.optimize.leastsq:"
-            print lm[3]
-            return(0)
-        self.pvec = lm[0]
-        self.covmatr = lm[1] * self.__residualvariance()
-        self.chi2 = self.__chi2(self.pvec)
-        self.stddev =\
-            dict(zip(self.__pnames,\
-                         [sqrt(i) for i in np.diag(self.covmatr)]))
-        self.parameters = dict(zip(self.__pnames, self.pvec))
-        self.residuals = self.__residuals()
-        if self.__verbose:
-        	self.report()
-        if self.__plot:
-        	self.plot()
-
-    def __residuals(self):
-    	"""
-    	Calculates the residuals
-    	"""
-        residuals = [None for x in self.__xdata]
-        i = 0
-        for x in self.__xdata:
-            residuals[i] = self.__ydata[i] - self(x)
-            i += 1
-        return residuals
+    # BUILT-IN METHODS
 
     def __call__(self, x):
     	"""
     	Evaluates the test function at x with the current set of parameters
         """
-        return self.__func(x, **self.parameters)
+        return self.__func(x, *self.__pfinal)
+
+    # PUBLIC METHODS
+
+    def fit(self, p0, lm_options={}, verbose=True, plot=False, plot_options={}):
+        """
+  		Carries out the least squares optimization.
+        """
+        self.__p0 = p0
+        self.__pnames = p0.keys()    
+        params = p0.values()
+        try:
+            self.__func(self.__x, *params)
+        except ValueError:
+            print 'Testfunction could not be evaluated using the given initial parameters!'
+            return
+        except ZeroDivisionError:
+            print "Testfunction could not be evaluated using the given initial parameters (Divison by Zero)!"
+            return
+        	
+        try:
+            self.__pfinal, covx, infodict, msg, ier =\
+                leastsq(func=self.__ToMinimize, x0=params, full_output=1, **lm_options)
+        except:
+            raise Exception("An unknown error has occured in the fitting process!")
+        
+        self.__pfinalDict = dict(zip(self.__pnames, self.__pfinal))
+        self.__Chi2 = sum(self(self.__x)**2)
+        self.__VarRes = self.__Chi2 / self.__ndf
+        self.__RMSChi2 = sqrt(self.__VarRes)
+        self.__CovMatrix = covx * self.__VarRes
+        self.__StdDev = dict(zip(self.__pnames,\
+                                     [sqrt(i) for i in np.diag(self.__CovMatrix)]))
+        self.__Res = self.__Residuals(self.__pfinal)
+        if verbose:
+        	self.report()
+        if plot:
+        	self.plot()
+
+    def getParameters(self):
+        return self.__pfinalDict
 
     def plot(self, residuals=True, acf=True, lagplot=True, histogramm=True):
     	"""
@@ -185,19 +160,19 @@ class lmfit(object):
     	fitplot.set_ylabel(r'$y$')
     	row = 1
     	if self.__yerror != None:
-            fitplot.errorbar(self.__xdata, self.__ydata, self.__yerror,\
+            fitplot.errorbar(self.__x, self.__y, self.__yerror,\
                              fmt='o')
         else:
-            fitplot.plot(self.__xdata, self.__ydata, 'o', label='Data')
-        x = np.linspace(self.__xdata[0], self.__xdata[len(self.__xdata)-1],\
-                         len(self.__xdata))
+            fitplot.plot(self.__x, self.__y, 'o', label='Data')
+        x = np.linspace(self.__x[0], self.__x[len(self.__x)-1],\
+                         len(self.__x))
         fitplot.plot(x, self(x), 'r-', label='Fit')
         fitplot.legend(loc='best')
         # additional plots
     	if residuals:
         	residualplot = plt.subplot(grid[row, :])
         	row += 1
-        	residualplot.plot(self.__xdata, self.residuals, 'go')
+        	residualplot.plot(self.__x, self.__Res, 'go')
         	residualplot.set_title(u'Plot of Residuals')
         	residualplot.set_xlabel(r'$x$')
         	residualplot.set_ylabel(r'Residuals')
@@ -205,7 +180,7 @@ class lmfit(object):
     		col = 0
     		acfplot = plt.subplot(grid[row, col])
     		col = 1
-        	lags, corrs, line, xaxis = acfplot.acorr(self.residuals, maxlags=None)
+        	lags, corrs, line, xaxis = acfplot.acorr(self.__Res, maxlags=None)
         	acfplot.set_xlim((-(len(lags)-1)/200, (len(lags)-1)/2))
         	acfplot.set_title(u'Correlogram of Residuals')
         	acfplot.set_xlabel(u'Lag')	
@@ -215,14 +190,15 @@ class lmfit(object):
         	if col == 1:
         		col = 0
         	row += 1
-        	lagplot.plot(self.residuals[1:], self.residuals[:-1], 'g.')
+        	lagplot.plot(self.__Res[1:], self.__Res[:-1], 'g.')
         	lagplot.set_title(u'Lag Plot of Residuals')	
         	lagplot.set_xlabel(r'$Y_{i-1}$')	
         	lagplot.set_ylabel(r'$Y_i$')
        	if histogramm:
         	hist = plt.subplot(grid[row, col])
-        	n, bins, patches = plt.hist(self.residuals, bins=20, normed=1, histtype='stepfilled')
-        	data = array(self.residuals)
+        	n, bins, patches = plt.hist(self.__Res, bins=20, normed=1,\
+                                                histtype='stepfilled')
+        	data = array(self.__Res)
     		mu = data.mean()
     		sigma = data.std()
     		gauss = normpdf(bins,mu,sigma)
@@ -244,23 +220,23 @@ class lmfit(object):
         print "--------------------------------------------"
         print "Initial set of parameters:"
         print self.__p0
-        print "Number of degrees of freedom (ndf): %d" % self.__ndf()
+        print "Number of degrees of freedom (ndf): %d" % self.__ndf
         print ""
         print "Results:"
         print ""
-        print "      Sum of residuals (Chi^2): %f" % self.chi2
+        print "      Sum of residuals (Chi^2): %f" % self.__Chi2
         print " Variance of Chi^2 (Chi^2/ndf): %f"\
-            % (self.chi2/self.__ndf())
+            % self.__VarRes
         print "RMS of Chi^2 (sqrt(Chi^2/ndf)): %f"\
-            % (sqrt(self.chi2/self.__ndf()))
+            % self.__RMSChi2
         print ""
         print "Covariance Matrix:"
-        print self.covmatr
+        print self.__CovMatrix
         print ""
         print "Final set of parameters:"
-        for item in self.parameters:
-            print "%s = %f +/- %f" %(item, self.parameters[item],\
-                                         self.stddev[item])
+        for item in self.__pfinalDict:
+            print "%s = %f +/- %f" %(item, self.__pfinalDict[item],\
+                                         self.__StdDev[item])
         print "============================================"
         
     def bootstrap(self, n=20):
@@ -273,29 +249,31 @@ class lmfit(object):
 		"""
         self.bootstrapfits = [i for i in range(n)]
         for i in self.bootstrapfits:
-            NewY = self(self.__xdata) + np.random.permutation(self.residuals)
-            self.bootstrapfits[i] = lmfit(self.__func, self.__xdata, NewY, p0=self.parameters, \
-	       		verbose=False)
-        for item in self.parameters:
-            mean = array([fit.parameters[item] for fit in self.bootstrapfits]).mean()
-            stddev = array([fit.parameters[item] for fit in \
+            NewY = self(self.__x) + np.random.permutation(self.__Res)
+            self.bootstrapfits[i] = lmfit(self.__func, self.__x, NewY,\
+                                              p0=self.__pfinalDict, verbose=False)
+        for item in self.__pfinalDict:
+            mean = array([fit.__pfinalDict[item] for fit in self.bootstrapfits]).mean()
+            stddev = array([fit.__pfinalDict[item] for fit in \
                 self.bootstrapfits]).std()
             print "%s = %f +/- %f" %(item, mean, stddev)
 			
 
 # TESTCODE
 if __name__ == '__main__':
-	from numpy import exp, linspace, array
-	from numpy.random import normal
-	# Signal generating function
-	sig = lambda x, alpha, x0: x**3/(x0**3) * exp(-((x-x0)/alpha)**2) + normal(0,0.1,len(x))
-	# Test function
-	testfunc = lambda x, alpha, x0: x**3/(x0**3) * exp(-((x-x0)/alpha)**2)
-	# Creating a synthetic dataset
-	x = array(linspace(0, 100, 1000))
-	y = sig(x=x, alpha=9.67, x0=18.47)
-	# Fitting the data with the testfunction by creating an instance of 
-	# the lmfit class
-	testfit = lmfit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10})
-	# Plot the results
-	testfit.plot() 
+    from numpy import exp, linspace, array
+    from numpy.random import normal
+    # Signal generating function
+    sig = lambda x, alpha, x0: x**3/(x0**3) * exp(-((x-x0)/alpha)**2) + normal(0,0.1,len(x))
+    # Test function
+    testfunc = lambda x, alpha, x0: x**3/(x0**3) * exp(-((x-x0)/alpha)**2)
+    # Creating a synthetic dataset
+    x = array(linspace(0, 100, 1000))
+    y = sig(x=x, alpha=9.67, x0=18.47)
+    # Fitting the data with the testfunction by creating an instance of 
+    # the lmfit class
+    testfit = lmfit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10})
+    # Plot the results
+    testfit.plot() 
+    # Bootstrap option: Remove the hash in the next line to perform a bootstrap analyses
+    #testfit.bootstrap(20)
