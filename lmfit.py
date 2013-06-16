@@ -16,6 +16,9 @@ import matplotlib.pylab as plt
 from matplotlib.mlab import normpdf
 import matplotlib.gridspec as gs
 from scipy.optimize import leastsq
+from sys import stderr
+from traceback import print_exc
+np.seterr(divide='raise')
 
 class lmfit(object):
     """
@@ -25,6 +28,9 @@ class lmfit(object):
     Resulting fitting parameters can be accessed via self.pvec or individually
     via self.pvec['name of parameter'].
     """
+
+    # CONSTRUCTOR
+    
     def __init__(self, func, xdata, ydata, p0, yerror=None, lm_options={}, verbose=True, \
     		plot=False, plot_options={}):
         """
@@ -45,21 +51,23 @@ class lmfit(object):
         # Checking input
         self.__reclength = len(xdata)
         if self.__reclength != len(ydata):
-            raise Exception('Inconsistent number of data points in xdata and ydata!')
+            stderr.write('ERROR: Inconsistent number of data points in xdata and ydata!\n')
+            return
 			
         if yerror == None:
             self.__ToMinimize = self.__Residuals
         elif self.__reclength == len(yerror):
             self.__ToMinimize = self.__WeightedResiduals
         else:
-            raise Exception('Inconsistent number of data points in data and yerror!')
-                
+            stderr.write('ERROR: Inconsistent number of data points in data and yerror!\n')
+            return
+    
         self.__p0 = p0
         self.__func = func
         self.__x = xdata
         self.__y = ydata
         self.__yerror = yerror
-        self.__ndf = self.__reclength - len(self.__p0)
+        self.__ndf = self.__reclength - len(self.__p0) - 1
         self.fit(p0, lm_options, verbose, plot, plot_options)
 
     # PRIVATE METHODS
@@ -73,7 +81,7 @@ class lmfit(object):
     def __WeightedResiduals(self, params):
         return(self.__y - self.__func(self.__x, *params)/self.__yerror)
 
-    # BUILT-IN METHODS
+    # SPECIAL PYTHON METHODS
 
     def __call__(self, x):
     	"""
@@ -83,20 +91,29 @@ class lmfit(object):
 
     # PUBLIC METHODS
 
+    def getParameters(self):
+        return self.__pfinalDict
+
+    def getStdDev(self):
+        return self.__StdDev
+
+    P = property(getParameters)
+    StdDev = property(getStdDev)
+
     def fit(self, p0, lm_options={}, verbose=True, plot=False, plot_options={}):
         """
-  		Carries out the least squares optimization.
+  	Carries out the least squares optimization.
         """
+        self.__results = None
         self.__p0 = p0
-        self.__pnames = p0.keys()    
-        params = p0.values()
+        self.__pnames = self.__p0.keys()    
+        params = self.__p0.values()
         try:
             self.__func(self.__x, *params)
-        except ValueError:
-            print 'Testfunction could not be evaluated using the given initial parameters!'
-            return
-        except ZeroDivisionError:
-            print "Testfunction could not be evaluated using the given initial parameters (Divison by Zero)!"
+        except FloatingPointError as FPE:
+            stderr.write('\nERROR: Testfunction could not be evaluated using the\
+ given initial parameters!\n(%s)\n\n' %FPE) 
+            print_exc(limit=2)
             return
         	
         try:
@@ -104,31 +121,35 @@ class lmfit(object):
                 leastsq(func=self.__ToMinimize, x0=params, full_output=1, **lm_options)
         except:
             raise Exception("An unknown error has occured in the fitting process!")
-        
+            return
+
+        Chi2 = sum(self(self.__x)**2)
+        VarRes = Chi2 / self.__ndf
+        RMSChi2 = sqrt(VarRes)
+        CovMatrix = covx * VarRes
+        StdDev = dict(zip(self.__pnames, [sqrt(i) for i in np.diag(CovMatrix)]))
+        Residuals = self.__Residuals(self.__pfinal)
         self.__pfinalDict = dict(zip(self.__pnames, self.__pfinal))
-        self.__Chi2 = sum(self(self.__x)**2)
-        self.__VarRes = self.__Chi2 / self.__ndf
-        self.__RMSChi2 = sqrt(self.__VarRes)
-        self.__CovMatrix = covx * self.__VarRes
-        self.__StdDev = dict(zip(self.__pnames,\
-                                     [sqrt(i) for i in np.diag(self.__CovMatrix)]))
-        self.__Res = self.__Residuals(self.__pfinal)
+        self.__StdDev = StdDev
+        self.__Res = Residuals
+        self.__results = {\
+            'Parameters': self.__pfinal, 'CovMatr': CovMatrix, 'Chi2': Chi2,\
+            'VarRes': VarRes, 'RMSChi2': RMSChi2, 'StdDev': StdDev, \
+            'Residuals': Residuals, 'nfev': infodict['nfev'], 'fvec': infodict['fvec'],\
+            'MINPACKMsg': msg}
         if verbose:
         	self.report()
         if plot:
         	self.plot()
 
-    def getParameters(self):
-        return self.__pfinalDict
-
     def plot(self, residuals=True, acf=True, lagplot=True, histogramm=True):
     	"""
     	Creates a plot of the data and the test function using current parameters.
     	Options:
-    		residuals:	Plot the residuals
-    		acf:		Plot the autocorrelogramm
-    		lagplot:	Show a lagplot
-    		histogramm: Plot histogramm of residuals 
+    		residuals  (bool):	Plot the residuals
+    		acf        (bool):		Plot the autocorrelogramm
+    		lagplot    (bool):	Show a lagplot
+    		histogramm (bool): Plot histogramm of residuals 
     	"""
     	# determine geometry
     	rows = 1
@@ -214,31 +235,36 @@ class lmfit(object):
     	"""
     	Prints a report about the results of the last fitting procedure
     	"""
-    	# Really not the most elegant way to do this...
-        print "============================================"
-        print "Report:"
-        print "--------------------------------------------"
-        print "Initial set of parameters:"
-        print self.__p0
-        print "Number of degrees of freedom (ndf): %d" % self.__ndf
-        print ""
-        print "Results:"
-        print ""
-        print "      Sum of residuals (Chi^2): %f" % self.__Chi2
-        print " Variance of Chi^2 (Chi^2/ndf): %f"\
-            % self.__VarRes
-        print "RMS of Chi^2 (sqrt(Chi^2/ndf)): %f"\
-            % self.__RMSChi2
-        print ""
-        print "Covariance Matrix:"
-        print self.__CovMatrix
-        print ""
-        print "Final set of parameters:"
+        if self.__results == None:
+            print 'No results to report!'
+            return
+        pstring = ''
         for item in self.__pfinalDict:
-            print "%s = %f +/- %f" %(item, self.__pfinalDict[item],\
-                                         self.__StdDev[item])
-        print "============================================"
-        
+            pstring += "\n%s = %f +/- %f"\
+                %(item, self.__pfinalDict[item], self.__StdDev[item])
+        print """
+===========================================
+Report:
+-------------------------------------------
+Initial set of parameters:
+%s
+Number of degrees of freedom (ndf): %d
+
+Results:
+Number of function evaluations: %d
+      Sum of residuals (Chi^2): %f
+ Variance of Chi^2 (Chi^2/ndf): %f
+RMS of Chi^2 (sqrt(Chi^2/ndf)): %f
+
+Covariance Matrix:
+%s
+
+Final set of parameters: %s
+===========================================
+""" % (self.__p0, self.__ndf, self.__results['nfev'], self.__results['Chi2'], \
+           self.__results['VarRes'], self.__results['RMSChi2'],\
+           self.__results['CovMatr'], pstring)
+
     def bootstrap(self, n=20):
         """
         BETA!
@@ -257,7 +283,6 @@ class lmfit(object):
             stddev = array([fit.__pfinalDict[item] for fit in \
                 self.bootstrapfits]).std()
             print "%s = %f +/- %f" %(item, mean, stddev)
-			
 
 # TESTCODE
 if __name__ == '__main__':
@@ -272,8 +297,6 @@ if __name__ == '__main__':
     y = sig(x=x, alpha=9.67, x0=18.47)
     # Fitting the data with the testfunction by creating an instance of 
     # the lmfit class
-    testfit = lmfit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10})
-    # Plot the results
-    testfit.plot() 
+    testfit = lmfit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10}, plot=True)
     # Bootstrap option: Remove the hash in the next line to perform a bootstrap analyses
     #testfit.bootstrap(20)
