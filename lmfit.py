@@ -91,14 +91,13 @@ class lmfit(object):
 
     # PUBLIC METHODS
 
-    def getParameters(self):
+    @property
+    def P(self):
         return self.__pfinalDict
 
-    def getStdDev(self):
+    @property
+    def StdDev(self):
         return self.__StdDev
-
-    P = property(getParameters)
-    StdDev = property(getStdDev)
 
     def fit(self, p0, lm_options={}, verbose=True, plot=False, plot_options={}):
         """
@@ -106,9 +105,10 @@ class lmfit(object):
         """
         self.__results = None
         self.__p0 = p0
-        self.__pnames = self.__p0.keys()
+        self.__pnames = p0.keys()
+        params = p0.values()
         try:
-            self.__func(self.__x, *p0)
+            self.__func(self.__x, *params)
         except FloatingPointError as FPE:
             stderr.write('\nERROR: Testfunction could not be evaluated using the\
  given initial parameters!\n(%s)\n\n' %FPE) 
@@ -117,7 +117,7 @@ class lmfit(object):
         	
         try:
             self.__pfinal, covx, infodict, msg, ier =\
-                leastsq(func=self.__ToMinimize, x0=p0, full_output=1, **lm_options)
+                leastsq(func=self.__ToMinimize, x0=params, full_output=1, **lm_options)
         except:
             raise Exception("An unknown error has occured in the fitting process!")
             return
