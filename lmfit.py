@@ -106,8 +106,7 @@ class lmfit(object):
         """
         self.__results = None
         self.__p0 = p0
-        self.__pnames = self.__p0.keys()    
-        params = self.__p0.values()
+        self.__pnames = self.__p0.keys()
         try:
             self.__func(self.__x, *params)
         except FloatingPointError as FPE:
@@ -118,12 +117,11 @@ class lmfit(object):
         	
         try:
             self.__pfinal, covx, infodict, msg, ier =\
-                leastsq(func=self.__ToMinimize, x0=params, full_output=1, **lm_options)
+                leastsq(func=self.__ToMinimize, x0=p0, full_output=1, **lm_options)
         except:
             raise Exception("An unknown error has occured in the fitting process!")
             return
 
-        
         if covx == None:
             print """
 Warning: Fit did not converge properly!
