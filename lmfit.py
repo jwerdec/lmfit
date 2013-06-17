@@ -48,7 +48,7 @@ class lmfit(object):
         verbose:	  Prints a full report on every fit (default: True)
         plot:		  Generates Plots to analyze the fit
         """
-        # Checking input
+        # Check input
         self.__reclength = len(xdata)
         if self.__reclength != len(ydata):
             stderr.write('ERROR: Inconsistent number of data points in xdata and ydata!\n')
