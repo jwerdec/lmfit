@@ -108,7 +108,7 @@ class lmfit(object):
         self.__p0 = p0
         self.__pnames = self.__p0.keys()
         try:
-            self.__func(self.__x, *params)
+            self.__func(self.__x, *p0)
         except FloatingPointError as FPE:
             stderr.write('\nERROR: Testfunction could not be evaluated using the\
  given initial parameters!\n(%s)\n\n' %FPE) 
