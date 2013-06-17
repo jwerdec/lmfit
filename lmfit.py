@@ -123,6 +123,16 @@ class lmfit(object):
             raise Exception("An unknown error has occured in the fitting process!")
             return
 
+        
+        if covx == None:
+            print """
+Warning: Fit did not converge properly!
+
+Message provided by MINPACK:
+%s
+""" % msg
+            return
+
         Chi2 = sum(self(self.__x)**2)
         VarRes = Chi2 / self.__ndf
         RMSChi2 = sqrt(VarRes)
