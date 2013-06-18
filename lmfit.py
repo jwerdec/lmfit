@@ -61,22 +61,44 @@ class lmfit(object):
         else:
             stderr.write('ERROR: Inconsistent number of data points in data and yerror!\n')
             return
-    
-        self.__p0 = p0
-        self.__func = func
+        
         self.__x = xdata
         self.__y = ydata
         self.__yerror = yerror
-        self.__ndf = self.__reclength - len(self.__p0) - 1
-        self.fit(p0, lm_options, verbose, plot, plot_options)
+        self.__ndf = self.__reclength - len(p0) - 1
+        self.__func = func
+        params, self.__pNames = self.__getParams(p0)
+        self.__p0 = dict(zip(self.__pNames, params))
+        self.fit(params, lm_options, verbose, plot, plot_options)
 
     # PRIVATE METHODS
+
+    def __getParams(self, p0):
+        VarNames = self.__getVarNames(self.__func)
+        i = 1
+        if VarNames[0] == 'self':
+            i += 1
+        pNames = VarNames[i:]
+        if type(p0) == type({}):
+            p0List = self.__pDictToList(p0, pNames)
+            return p0List, pNames
+        else:
+            return p0, pNames
+            
+    def __getVarNames(self, func):
+        return func.func_code.co_varnames
+
+    def __pDictToList(self, pdict, PNames):
+        PList = []
+        for PName in PNames:
+            PList.append(pdict[PName])
+        return PList
 
     def __ToMinimize(self, params):
         pass
 
     def __Residuals(self, params):
-        return(self.__y - self.__func(self.__x, *params))
+        return(self.__y - self.__func(self.__x,  *params))
 
     def __WeightedResiduals(self, params):
         return(self.__y - self.__func(self.__x, *params)/self.__yerror)
@@ -103,10 +125,8 @@ class lmfit(object):
         """
   	Carries out the least squares optimization.
         """
-        self.__results = None
-        self.__p0 = p0
-        self.__pnames = p0.keys()
-        params = p0.values()
+        params, self.__pNames = self.__getParams(p0)
+        self.__p0 = dict(zip(self.__pNames, params))
         try:
             self.__func(self.__x, *params)
         except FloatingPointError as FPE:
@@ -131,13 +151,13 @@ Message provided by MINPACK:
 """ % msg
             return
 
+        self.__pfinalDict = dict(zip(self.__pNames, self.__pfinal))
         Chi2 = sum(self(self.__x)**2)
         VarRes = Chi2 / self.__ndf
         RMSChi2 = sqrt(VarRes)
         CovMatrix = covx * VarRes
-        StdDev = dict(zip(self.__pnames, [sqrt(i) for i in np.diag(CovMatrix)]))
+        StdDev = dict(zip(self.__pNames, [sqrt(i) for i in np.diag(CovMatrix)]))
         Residuals = self.__Residuals(self.__pfinal)
-        self.__pfinalDict = dict(zip(self.__pnames, self.__pfinal))
         self.__StdDev = StdDev
         self.__Res = Residuals
         self.__results = {\
@@ -183,7 +203,7 @@ Message provided by MINPACK:
     	grid = gs.GridSpec(rows, cols, width_ratios=width_ratios,\
     		 height_ratios=height_ratios)
     	# main plot	 
-    	fig = plt.figure()
+    	fig = plt.figure(figsize=(16,10), dpi=100)
     	fitplot = plt.subplot(grid[0, :])
     	fitplot.set_xlabel(r'$x$')
     	fitplot.set_ylabel(r'$y$')
