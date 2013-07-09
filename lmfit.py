@@ -19,6 +19,7 @@ from scipy.optimize import leastsq
 from sys import stderr
 from traceback import print_exc
 np.seterr(divide='raise')
+plt.rcParams.update({'font.size': 14, 'font.family': 'serif'})
 
 class lmfit(object):
     """
@@ -69,7 +70,8 @@ class lmfit(object):
         self.__func = func
         params, self.__pNames = self.__getParams(p0)
         self.__p0 = dict(zip(self.__pNames, params))
-        self.fit(params, lm_options, verbose, plot, plot_options)
+        self.fit(params, lm_options=lm_options, verbose=verbose, plot=plot,\
+                     plot_options = plot_options)
 
     # PRIVATE METHODS
 
@@ -255,9 +257,9 @@ Message provided by MINPACK:
         	hist.set_title(u'Histogramm')	
         	hist.set_xlabel(r'')	
         	hist.set_ylabel(r'')
-        grid.tight_layout(fig, h_pad=-1)
-        plt.show()
-        return(fig)
+        grid.tight_layout(fig)
+        self.fig = fig
+        plt.show(fig)
         
     def report(self):
     	"""
