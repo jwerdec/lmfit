@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 #   Requirements:
+#   numpy, scipy.optimize, matplotlib, multiprocessing
 #
 #   Python v2.5 or later (not compatible with Python 3)
 #
@@ -8,6 +9,8 @@
 #
 #   v0.1 2013-05-21: First more or less fully functional version
 #   v0.2 2013-06-16: Clean up and restructuring of the code
+#   v0.3 2013-07-10: Bugfixes, New Bootstrapping function with
+#                    multiprocessing support
 
 from __future__ import division
 import numpy as np
@@ -18,6 +21,7 @@ import matplotlib.gridspec as gs
 from scipy.optimize import leastsq
 from sys import stderr
 from traceback import print_exc
+from multiprocessing import Process, JoinableQueue, Queue
 np.seterr(divide='raise')
 plt.rcParams.update({'font.size': 14, 'font.family': 'serif'})
 
@@ -32,8 +36,8 @@ class lmfit(object):
 
     # CONSTRUCTOR
     
-    def __init__(self, func, xdata, ydata, p0, yerror=None, lm_options={}, verbose=True, \
-    		plot=False, plot_options={}):
+    def __init__(self, func, xdata, ydata, p0, yerror=None, lm_options={},\
+                     verbose=True, plot=False, plot_options={}):
         """
         Constructor of class lmfit.
         Parameters:
@@ -172,6 +176,26 @@ Message provided by MINPACK:
         if plot:
         	self.plot()
 
+    @property 
+    def CovMatrix(self):
+        return self.__results['CovMatr']
+    
+    @property
+    def Chi2(self):
+        return self.__results['Chi2']
+
+    @property
+    def RMSChi2(self):
+        return self.__results['RMSChi2']
+
+    @property
+    def Residuals(self):
+        return self.__results['Residuals']
+
+    @property
+    def full_results(self):
+        return self.__results
+
     def plot(self, residuals=True, acf=True, lagplot=True, histogramm=True):
     	"""
     	Creates a plot of the data and the test function using current parameters.
@@ -215,8 +239,7 @@ Message provided by MINPACK:
                              fmt='o')
         else:
             fitplot.plot(self.__x, self.__y, 'o', label='Data')
-        x = np.linspace(self.__x[0], self.__x[len(self.__x)-1],\
-                         len(self.__x))
+        x = np.linspace(self.__x[0], self.__x[-1], 1000)
         fitplot.plot(x, self(x), 'r-', label='Fit')
         fitplot.legend(loc='best')
         # additional plots
@@ -295,24 +318,86 @@ Final set of parameters: %s
            self.__results['VarRes'], self.__results['RMSChi2'],\
            self.__results['CovMatr'], pstring)
 
-    def bootstrap(self, n=20):
+    def __fit_worker(self, q_in, q_out):
+        while True:
+            y = q_in.get()
+            if y is None:
+                q_in.task_done()
+                break
+            ToMinimize = lambda params: y - self.__func(self.__x, *params)
+            pfinal, covx, infodict, msg, ier =\
+                leastsq(func=ToMinimize, x0=self.__pfinal, full_output=1)
+            pfinalDict = dict(zip(self.__pNames, pfinal))
+            q_out.put(pfinalDict)
+            q_in.task_done()
+        return
+
+    def bootstrap(self, n=500, n_cpu=1, plot=False):
         """
         BETA!
-		Resamples the residuals and fits the data to the fitted function + 
-		resampled residuals. Then calculates the statistics for the fitting 
-		parameters.
-		n: Number of resamplings
-		"""
-        self.bootstrapfits = [i for i in range(n)]
-        for i in self.bootstrapfits:
+	Resamples the residuals and fits the data to the fitted function + resampled residuals. Then calculates the statistics for the fitting parameters.
+	n: Number of resamplings
+        n_cpu: Number of processes used by this method
+        Returns:
+            Mean: Dictionary of Mean values found for all fit parameters
+            StdDev: Dictionary of Standard Deviations for all fit parameters
+	"""    
+
+        def __fit_worker(self, q_in, q_out):
+            """
+            Defines what is done in the multiprocessing step
+            """
+            while True:        # watch out for new input in a loop
+                y = q_in.get() # get input from queue
+                if y is None:  # break the loop, when receiving None-type
+                    q_in.task_done()
+                    break
+                ToMinimize = lambda params: y - self.__func(self.__x, *params)
+                pfinal, covx, infodict, msg, ier =\
+                    leastsq(func=ToMinimize, x0=self.__pfinal, full_output=1)
+                pfinalDict = dict(zip(self.__pNames, pfinal))
+                q_out.put(pfinalDict) #pass result to the output queue
+                q_in.task_done()
+            return
+
+        # introducing the queues
+        q_in = JoinableQueue()
+        q_out = Queue()
+        # set up the processes
+        procs = []
+        for i in range(n_cpu):
+            p = Process(target=self.__fit_worker, args=(q_in,q_out))
+            p.daemon = True
+            p.start()
+            procs.append(p)
+        outlist = [i for i in range(n)]
+        # set up the jobs to do and put them into the queue
+        for i in outlist:
             NewY = self(self.__x) + np.random.permutation(self.__Res)
-            self.bootstrapfits[i] = lmfit(self.__func, self.__x, NewY,\
-                                              p0=self.__pfinalDict, verbose=False)
-        for item in self.__pfinalDict:
-            mean = array([fit.__pfinalDict[item] for fit in self.bootstrapfits]).mean()
-            stddev = array([fit.__pfinalDict[item] for fit in \
-                self.bootstrapfits]).std()
-            print "%s = %f +/- %f" %(item, mean, stddev)
+            q_in.put(NewY)
+        for i in range(n_cpu): # tell processes to break
+            q_in.put(None)
+        q_in.join()           # wait for all processes to finish
+        for i in outlist:     # get the results
+            outlist[i] = q_out.get()
+        Results = {}
+        for varname in self.__pNames:
+            Results[varname] = [outdict[varname] for outdict in outlist]
+        # Calculate Mean and Standard Deviation
+        Mean = {}
+        StdDev = {}
+        for varname in Results.keys():
+            Mean[varname] = np.array(Results[varname]).mean()
+            StdDev[varname] = np.array(Results[varname]).std()
+        if plot: # plot fits if requested
+            plt.plot(self.__x, self.__y, 'bo')
+            plt.title(r'Bootstrapping Fits')
+            x = np.linspace(self.__x[0], self.__x[-1], 1000)
+            for finalDict in outlist:
+                plt.plot(x, self.__func(x, **finalDict))
+            plt.show()
+        return Mean, StdDev
+        
 
 # TESTCODE
 if __name__ == '__main__':
@@ -321,7 +406,7 @@ if __name__ == '__main__':
     # Signal generating function
     sig = lambda x, alpha, x0: x**3/(x0**3) * exp(-((x-x0)/alpha)**2) + normal(0,0.1,len(x))
     # Test function
-    testfunc = lambda x, alpha, x0: x**3/(x0**3) * exp(-((x-x0)/alpha)**2)
+    testfunc = lambda x, alpha, x0: x**3.0/(x0**3.0) * exp(-((x-x0)/alpha)**2)
     # Creating a synthetic dataset
     x = array(linspace(0, 100, 1000))
     y = sig(x=x, alpha=9.67, x0=18.47)
@@ -329,4 +414,4 @@ if __name__ == '__main__':
     # the lmfit class
     testfit = lmfit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10}, plot=True)
     # Bootstrap option: Remove the hash in the next line to perform a bootstrap analyses
-    #testfit.bootstrap(20)
+    #print testfit.bootstrap(500, 2, plot=True)
