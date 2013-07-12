@@ -22,7 +22,6 @@ from scipy.optimize import leastsq
 from sys import stderr
 from traceback import print_exc
 from multiprocessing import Process, JoinableQueue, Queue
-np.seterr(divide='raise')
 plt.rcParams.update({'font.size': 14, 'font.family': 'serif'})
 
 class lmfit(object):
@@ -133,6 +132,7 @@ class lmfit(object):
         """
         params, self.__pNames = self.__getParams(p0)
         self.__p0 = dict(zip(self.__pNames, params))
+        np.seterr(divide='raise')
         try:
             self.__func(self.__x, *params)
         except FloatingPointError as FPE:
@@ -167,14 +167,14 @@ Message provided by MINPACK:
         self.__StdDev = StdDev
         self.__Res = Residuals
         self.__results = {\
-            'Parameters': self.__pfinal, 'CovMatr': CovMatrix, 'Chi2': Chi2,\
+            'Parameters': self.__pfinalDict, 'CovMatr': CovMatrix, 'Chi2': Chi2,\
             'VarRes': VarRes, 'RMSChi2': RMSChi2, 'StdDev': StdDev, \
             'Residuals': Residuals, 'nfev': infodict['nfev'], 'fvec': infodict['fvec'],\
             'MINPACKMsg': msg}
         if verbose:
         	self.report()
         if plot:
-        	self.plot()
+        	self.plot(**plot_options)
 
     @property 
     def CovMatrix(self):
@@ -207,24 +207,19 @@ Message provided by MINPACK:
     	"""
     	# determine geometry
     	rows = 1
-    	cols = 1
+    	cols = 2
     	height_ratios=[2]
-    	width_ratios=[1]
+    	width_ratios=[1,1]
     	if residuals:
     		rows += 1
     		height_ratios.append(1)
-    	if acf:
-    		rows += 1
-    		height_ratios.append(1)
-    	if lagplot:
-    		cols = 2
-    		width_ratios=[1,1]
-    	if histogramm:
-    		if acf and lagplot:
-    			rows += 1
-    			height_ratios.append(1)
-    		cols = 2
-    		width_ratios=[1,1]
+        if lagplot:
+            rows += 2
+            height_ratios.append(1)
+            height_ratios.append(1)
+        elif histogramm or acf:
+            rows += 1
+            height_ratios.append(1)
     	# set geometry
     	grid = gs.GridSpec(rows, cols, width_ratios=width_ratios,\
     		 height_ratios=height_ratios)
@@ -241,8 +236,9 @@ Message provided by MINPACK:
             fitplot.plot(self.__x, self.__y, 'o', label='Data')
         x = np.linspace(self.__x[0], self.__x[-1], 1000)
         fitplot.plot(x, self(x), 'r-', label='Fit')
-        fitplot.legend(loc='best')
+        fitplot.legend(loc='best', numpoints=1)
         # additional plots
+        col = 0
     	if residuals:
         	residualplot = plt.subplot(grid[row, :])
         	row += 1
@@ -254,7 +250,8 @@ Message provided by MINPACK:
     		col = 0
     		acfplot = plt.subplot(grid[row, col])
     		col = 1
-        	lags, corrs, line, xaxis = acfplot.acorr(self.__Res, maxlags=None)
+        	lags, corrs, line, xaxis =\
+                    acfplot.acorr(self.__Res, maxlags=None)
         	acfplot.set_xlim((-(len(lags)-1)/200, (len(lags)-1)/2))
         	acfplot.set_title(u'Correlogram of Residuals')
         	acfplot.set_xlabel(u'Lag')	
@@ -341,6 +338,7 @@ Final set of parameters: %s
         Returns:
             Mean: Dictionary of Mean values found for all fit parameters
             StdDev: Dictionary of Standard Deviations for all fit parameters
+            outlist: A list with dictionaries of fit parameters from all fits 
 	"""    
 
         def __fit_worker(self, q_in, q_out):
@@ -396,7 +394,7 @@ Final set of parameters: %s
             for finalDict in outlist:
                 plt.plot(x, self.__func(x, **finalDict))
             plt.show()
-        return Mean, StdDev
+        return Mean, StdDev, outlist
         
 
 # TESTCODE
@@ -413,5 +411,5 @@ if __name__ == '__main__':
     # Fitting the data with the testfunction by creating an instance of 
     # the lmfit class
     testfit = lmfit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10}, plot=True)
-    # Bootstrap option: Remove the hash in the next line to perform a bootstrap analyses
-    #print testfit.bootstrap(500, 2, plot=True)
+    Mean, StdDev, outlist = testfit.bootstrap(500, 2, plot=True)
+    print Mean, StdDev
