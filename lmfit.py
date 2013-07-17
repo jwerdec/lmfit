@@ -9,8 +9,6 @@
 #
 #   v0.1 2013-05-21: First more or less fully functional version
 #   v0.2 2013-06-16: Clean up and restructuring of the code
-#   v0.3 2013-07-10: Bugfixes, New Bootstrapping function with
-#                    multiprocessing support
 
 from __future__ import division
 import numpy as np
@@ -20,9 +18,8 @@ from matplotlib.mlab import normpdf
 import matplotlib.gridspec as gs
 from scipy.optimize import leastsq
 from sys import stderr
+import sys
 from traceback import print_exc
-from multiprocessing import Process, JoinableQueue, Queue
-plt.rcParams.update({'font.size': 14, 'font.family': 'serif'})
 
 class lmfit(object):
     """
@@ -196,6 +193,10 @@ Message provided by MINPACK:
     def full_results(self):
         return self.__results
 
+    @property
+    def func(self):
+        return self.__func
+
     def plot(self, residuals=True, acf=True, lagplot=True, histogramm=True):
     	"""
     	Creates a plot of the data and the test function using current parameters.
@@ -315,21 +316,7 @@ Final set of parameters: %s
            self.__results['VarRes'], self.__results['RMSChi2'],\
            self.__results['CovMatr'], pstring)
 
-    def __fit_worker(self, q_in, q_out):
-        while True:
-            y = q_in.get()
-            if y is None:
-                q_in.task_done()
-                break
-            ToMinimize = lambda params: y - self.__func(self.__x, *params)
-            pfinal, covx, infodict, msg, ier =\
-                leastsq(func=ToMinimize, x0=self.__pfinal, full_output=1)
-            pfinalDict = dict(zip(self.__pNames, pfinal))
-            q_out.put(pfinalDict)
-            q_in.task_done()
-        return
-
-    def bootstrap(self, n=500, n_cpu=1, plot=False):
+    def bootstrap(self, n=500, plot=False):
         """
         BETA!
 	Resamples the residuals and fits the data to the fitted function + resampled residuals. Then calculates the statistics for the fitting parameters.
@@ -341,43 +328,14 @@ Final set of parameters: %s
             outlist: A list with dictionaries of fit parameters from all fits 
 	"""    
 
-        def __fit_worker(self, q_in, q_out):
-            """
-            Defines what is done in the multiprocessing step
-            """
-            while True:        # watch out for new input in a loop
-                y = q_in.get() # get input from queue
-                if y is None:  # break the loop, when receiving None-type
-                    q_in.task_done()
-                    break
-                ToMinimize = lambda params: y - self.__func(self.__x, *params)
-                pfinal, covx, infodict, msg, ier =\
-                    leastsq(func=ToMinimize, x0=self.__pfinal, full_output=1)
-                pfinalDict = dict(zip(self.__pNames, pfinal))
-                q_out.put(pfinalDict) #pass result to the output queue
-                q_in.task_done()
-            return
-
-        # introducing the queues
-        q_in = JoinableQueue()
-        q_out = Queue()
-        # set up the processes
-        procs = []
-        for i in range(n_cpu):
-            p = Process(target=self.__fit_worker, args=(q_in,q_out))
-            p.daemon = True
-            p.start()
-            procs.append(p)
         outlist = [i for i in range(n)]
-        # set up the jobs to do and put them into the queue
+        print 'Bootstrapping:'
         for i in outlist:
             NewY = self(self.__x) + np.random.permutation(self.__Res)
-            q_in.put(NewY)
-        for i in range(n_cpu): # tell processes to break
-            q_in.put(None)
-        q_in.join()           # wait for all processes to finish
-        for i in outlist:     # get the results
-            outlist[i] = q_out.get()
+            ToMinimize = lambda params: NewY - self.__func(self.__x, *params)
+            pfinal, covx, infodict, msg, ier =\
+                    leastsq(func=ToMinimize, x0=self.__pfinal, full_output=1)
+            outlist[i] = dict(zip(self.__pNames, pfinal))
         Results = {}
         for varname in self.__pNames:
             Results[varname] = [outdict[varname] for outdict in outlist]
@@ -411,5 +369,5 @@ if __name__ == '__main__':
     # Fitting the data with the testfunction by creating an instance of 
     # the lmfit class
     testfit = lmfit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10}, plot=True)
-    Mean, StdDev, outlist = testfit.bootstrap(500, 2, plot=True)
+    Mean, StdDev, outlist = testfit.bootstrap(500, plot=True)
     print Mean, StdDev
