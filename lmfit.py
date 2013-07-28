@@ -172,6 +172,14 @@ Message provided by MINPACK:
         	self.report()
         if plot:
         	self.plot(**plot_options)
+        	
+    @property
+    def xdata(self):
+    	return self.__x
+    	
+    @property
+    def ydata(self):
+		return self.__y
 
     @property 
     def CovMatrix(self):
