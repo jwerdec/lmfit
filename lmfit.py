@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #   Requirements:
-#   numpy, scipy.optimize, matplotlib, multiprocessing
+#   numpy, scipy.optimize, matplotlib
 #
 #   Python v2.5 or later (not compatible with Python 3)
 #
@@ -9,6 +9,7 @@
 #
 #   v0.1 2013-05-21: First more or less fully functional version
 #   v0.2 2013-06-16: Clean up and restructuring of the code
+#   v1.0 2013-09-25: First stable version
 
 from __future__ import division
 import numpy as np
