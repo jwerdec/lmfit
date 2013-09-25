@@ -26,8 +26,8 @@ class lmfit(object):
     Class providing access to Scipy's leastsq function for function fitting
     employing the Levenberg-Marqurdt algorithm.
     
-    Resulting fitting parameters can be accessed via self.pvec or individually
-    via self.pvec['name of parameter'].
+    Resulting fitting parameters can be accessed via self.P or individually
+    via self.P['name of parameter'].
     """
 
     # CONSTRUCTOR
@@ -88,7 +88,7 @@ class lmfit(object):
             return p0, pNames
             
     def __getVarNames(self, func):
-        return func.func_code.co_varnames
+        return func.func_code.co_varnames[:func.func_code.co_argcount]
 
     def __pDictToList(self, pdict, PNames):
         PList = []
