@@ -1,8 +1,5 @@
-#!/usr/bin/env python
-#
 #   Requirements:
 #   numpy, scipy.optimize, matplotlib
-#
 #   Python v2.5 or later (not compatible with Python 3)
 #
 #   Version History:
@@ -12,58 +9,85 @@
 #   v1.0 2013-09-25: First stable version
 
 from __future__ import division
+from sys import stderr
+import sys
+from traceback import print_exc
+
 import numpy as np
 from numpy import sqrt, array, sum
 import matplotlib.pylab as plt
 from matplotlib.mlab import normpdf
 import matplotlib.gridspec as gs
 from scipy.optimize import leastsq
-from sys import stderr
-import sys
-from traceback import print_exc
 
 class lmfit(object):
-    """
-    Class providing access to Scipy's leastsq function for function fitting
-    employing the Levenberg-Marqurdt algorithm.
-    
-    Resulting fitting parameters can be accessed via self.P or individually
-    via self.P['name of parameter'].
-    """
+    r"""
+    Class handling non-linear least squares fitting of 2d datasets.
 
-    # CONSTRUCTOR
+    Based on scipy's leastsq function lmfit implements the
+    Levenberg-Marquardt-Algorithm provided by the Fortran MINPACK library.
+
+    Parameters
+    ----------
+    func : function-type
+        Testfunction to be fitted.
+    xdata, ydata: array-like
+        Datasets with equal dimensions.
+    p0 : dict or list
+        Set of initial parameters. When passing p0 as a list the ordering
+        of the parameters must be the same as in the function definition.
+        So for func = lambda x, a, b: a*x + b either is possible:
+        p0={'a':1, 'b': 2} or p0=[1, 2].
+    yerror : array-like, optional
+        Weights for individual data points. Must have the same dimensions as
+        x/ydata arrays.
+    lm_options : dict, optional
+        Options passed to scipy.optimize.leastsq. Cf. scipy reference for 
+        possible options.
+    verbose, plot : bool, optional
+        Toggle verbose output (default: True) and plot window (default: False).
+    plot_options : dict, optional
+        Options passed to this classes plot method.
+
+    Attributes
+    ----------
+    xdata, ydata
+    func
+    P 
+    StdDev
+    CovMatr
+    Chi2
+    RMSChi2
+    Residuals
+    full_results
+    fig : class instance
+        Instance of matplotlib's figure class. Only available after plotting.
+
+    See Also
+    --------
+    scipy.optimize.leastsq : Wrapper for MINPACK's fit functions.
+
+    Notes
+    -----
+    """
     
     def __init__(self, func, xdata, ydata, p0, yerror=None, lm_options={},\
                      verbose=True, plot=False, plot_options={}):
-        """
-        Constructor of class lmfit.
-        Parameters:
-        func: 		  Pointer on the testfunction used to fit the data with
-        xdata, ydata: Lists or 1D-Arrays of the same length containing the \\
-        	data points
-        yerror:  	  List or 1D-Array of the same length as ydata containing\\
-        	weights to the individual ydata points. None (default) weights \\
-        	every y value equally
-        p0:			  Dictionary of the parameters in func to optimize
-        lmoptions:	  Options passed to scipy.optimize.leastsq function, cf. \\
-        	Scipy manual for available options
-        verbose:	  Prints a full report on every fit (default: True)
-        plot:		  Generates Plots to analyze the fit
-        """
         # Check input
         self.__reclength = len(xdata)
         if self.__reclength != len(ydata):
-            stderr.write('ERROR: Inconsistent number of data points in xdata and ydata!\n')
-            return
-			
+            stderr.write("ERROR: Inconsistent number of data points in xdata "
+                         "and ydata!\n")
+            return		
         if yerror == None:
             self.__ToMinimize = self.__Residuals
         elif self.__reclength == len(yerror):
             self.__ToMinimize = self.__WeightedResiduals
         else:
-            stderr.write('ERROR: Inconsistent number of data points in data and yerror!\n')
+            stderr.write("ERROR: Inconsistent number of data points in data "
+                         "and yerror!\n")
             return
-        
+        # Write variables
         self.__x = xdata
         self.__y = ydata
         self.__yerror = yerror
@@ -74,9 +98,10 @@ class lmfit(object):
         self.fit(params, lm_options=lm_options, verbose=verbose, plot=plot,\
                      plot_options = plot_options)
 
-    # PRIVATE METHODS
-
     def __getParams(self, p0):
+        r"""
+        Get the names of the parameters from p0.
+        """
         VarNames = self.__getVarNames(self.__func)
         i = 1
         if VarNames[0] == 'self':
@@ -89,39 +114,58 @@ class lmfit(object):
             return p0, pNames
             
     def __getVarNames(self, func):
+        r"""
+        Get the name of the arguments of the function func.
+        """
         return func.func_code.co_varnames[:func.func_code.co_argcount]
 
     def __pDictToList(self, pdict, PNames):
+        r"""
+        Puts the parameters in pdict into list in the ordering given by PNames. 
+        """
         PList = []
         for PName in PNames:
             PList.append(pdict[PName])
         return PList
 
     def __ToMinimize(self, params):
+        r"""
+        Dummy method which is replaced by __Residuals or __WightedResiduals on
+        contruction.
+        """
         pass
 
     def __Residuals(self, params):
+        r"""
+        Defines the function whos sum of squares is to be minimized.
+        """
         return(self.__y - self.__func(self.__x,  *params))
 
     def __WeightedResiduals(self, params):
+        r"""
+        Defines the function whos sum of squares is to be minimized.
+        """
         return(self.__y - self.__func(self.__x, *params)/self.__yerror)
-
-    # SPECIAL PYTHON METHODS
 
     def __call__(self, x):
     	"""
-    	Evaluates the test function at x with the current set of parameters
+    	Evaluates the testfunction at x with the current set of parameters
         """
         return self.__func(x, *self.__pfinal)
 
-    # PUBLIC METHODS
-
     @property
     def P(self):
+        r"""
+        Dictionary containing the resulting fit parameters.
+        """
         return self.__pfinalDict
 
     @property
-    def StdDev(self):
+    def StdDev(self): 
+        r"""
+        Dictionary containing the standard deviations of the resulting fit
+        parameters.
+        """
         return self.__StdDev
 
     def fit(self, p0, lm_options={}, verbose=True, plot=False, plot_options={}):
@@ -180,7 +224,7 @@ Message provided by MINPACK:
     	
     @property
     def ydata(self):
-		return self.__y
+        return self.__y
 
     @property 
     def CovMatrix(self):
