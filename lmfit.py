@@ -10,7 +10,7 @@ from matplotlib.mlab import normpdf
 import matplotlib.gridspec as gs
 from scipy.optimize import leastsq
 
-class lmfit(object):
+class LMFit(object):
     r"""
     Class handling non-linear least squares fitting of 2d datasets.
 
@@ -478,7 +478,7 @@ if __name__ == '__main__':
     y = sig(x=x, alpha=9.67, x0=18.47)
     # Fitting the data with the testfunction by creating an instance of 
     # the lmfit class
-    testfit = lmfit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10},
+    testfit = LMFit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10},
                     plot=True)
     Mean, StdDev, outlist = testfit.bootstrap(500, plot=True)
     print Mean, StdDev
