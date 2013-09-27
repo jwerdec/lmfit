@@ -57,8 +57,8 @@
   <div class="section" id="module-lmfit">
 <span id="lmfit-reference"></span><h1>lmfit Reference<a class="headerlink" href="#module-lmfit" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="lmfit.lmfit">
-<em class="property">class </em><tt class="descclassname">lmfit.</tt><tt class="descname">lmfit</tt><big>(</big><em>func</em>, <em>xdata</em>, <em>ydata</em>, <em>p0</em>, <em>yerror=None</em>, <em>lm_options={}</em>, <em>verbose=True</em>, <em>plot=False</em>, <em>plot_options={}</em><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit">
+<em class="property">class </em><tt class="descclassname">lmfit.</tt><tt class="descname">LMFit</tt><big>(</big><em>func</em>, <em>xdata</em>, <em>ydata</em>, <em>p0</em>, <em>yerror=None</em>, <em>lm_options={}</em>, <em>verbose=True</em>, <em>plot=False</em>, <em>plot_options={}</em><big>)</big><a class="headerlink" href="#lmfit.LMFit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class handling non-linear least squares fitting of 2d datasets.</p>
 <p>Based on scipy&#8217;s leastsq function lmfit implements the
 Levenberg-Marquardt-Algorithm provided by the Fortran MINPACK library.</p>
@@ -134,57 +134,57 @@ possible options.</p>
 </table>
 <p class="rubric">Methods</p>
 <dl class="attribute">
-<dt id="lmfit.lmfit.Chi2">
-<tt class="descname">Chi2</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.Chi2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.Chi2" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.Chi2">
+<tt class="descname">Chi2</tt><a class="headerlink" href="#lmfit.LMFit.Chi2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Value of Chi^2.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lmfit.lmfit.CovMatrix">
-<tt class="descname">CovMatrix</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.CovMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.CovMatrix" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.CovMatrix">
+<tt class="descname">CovMatrix</tt><a class="headerlink" href="#lmfit.LMFit.CovMatrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>The Covariance Matrix.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lmfit.lmfit.P">
-<tt class="descname">P</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.P"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.P" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.P">
+<tt class="descname">P</tt><a class="headerlink" href="#lmfit.LMFit.P" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary containing the resulting fit parameters.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lmfit.lmfit.RMSChi2">
-<tt class="descname">RMSChi2</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.RMSChi2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.RMSChi2" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.RMSChi2">
+<tt class="descname">RMSChi2</tt><a class="headerlink" href="#lmfit.LMFit.RMSChi2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Root mean square value of Chi^2.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lmfit.lmfit.Residuals">
-<tt class="descname">Residuals</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.Residuals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.Residuals" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.Residuals">
+<tt class="descname">Residuals</tt><a class="headerlink" href="#lmfit.LMFit.Residuals" title="Permalink to this definition">¶</a></dt>
 <dd><p>Array containing the Residuals.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lmfit.lmfit.StdDev">
-<tt class="descname">StdDev</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.StdDev"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.StdDev" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.StdDev">
+<tt class="descname">StdDev</tt><a class="headerlink" href="#lmfit.LMFit.StdDev" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary containing the standard deviations of the resulting fit
 parameters.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lmfit.lmfit.__call__">
-<tt class="descname">__call__</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.__call__" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.__call__">
+<tt class="descname">__call__</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#lmfit.LMFit.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluates the testfunction at x with the current set of parameters</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lmfit.lmfit.__weakref__">
-<tt class="descname">__weakref__</tt><a class="headerlink" href="#lmfit.lmfit.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.__weakref__">
+<tt class="descname">__weakref__</tt><a class="headerlink" href="#lmfit.LMFit.__weakref__" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of weak references to the object (if defined)</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lmfit.lmfit.bootstrap">
-<tt class="descname">bootstrap</tt><big>(</big><em>n=500</em>, <em>plot=False</em><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit.bootstrap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.bootstrap" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.bootstrap">
+<tt class="descname">bootstrap</tt><big>(</big><em>n=500</em>, <em>plot=False</em><big>)</big><a class="headerlink" href="#lmfit.LMFit.bootstrap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs a bootstrapping analysis of the Residuals.</p>
 <p>The Residuals are randomly resampled and superimposed on the fitted 
 testfunction. This artificial dataset is then fitted again and the 
@@ -227,8 +227,8 @@ the bootstrap fits.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lmfit.lmfit.fit">
-<tt class="descname">fit</tt><big>(</big><em>p0</em>, <em>lm_options={}</em>, <em>verbose=True</em>, <em>plot=False</em>, <em>plot_options={}</em><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.fit" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.fit">
+<tt class="descname">fit</tt><big>(</big><em>p0</em>, <em>lm_options={}</em>, <em>verbose=True</em>, <em>plot=False</em>, <em>plot_options={}</em><big>)</big><a class="headerlink" href="#lmfit.LMFit.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Carries out the non-linear fit.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -277,20 +277,20 @@ possible options.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lmfit.lmfit.full_results">
-<tt class="descname">full_results</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.full_results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.full_results" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.full_results">
+<tt class="descname">full_results</tt><a class="headerlink" href="#lmfit.LMFit.full_results" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary with all results from the fit and additional information.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lmfit.lmfit.func">
-<tt class="descname">func</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.func" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.func">
+<tt class="descname">func</tt><a class="headerlink" href="#lmfit.LMFit.func" title="Permalink to this definition">¶</a></dt>
 <dd><p>The original testfunction.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lmfit.lmfit.plot">
-<tt class="descname">plot</tt><big>(</big><em>residuals=True</em>, <em>acf=True</em>, <em>lagplot=True</em>, <em>histogramm=True</em><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.plot" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.plot">
+<tt class="descname">plot</tt><big>(</big><em>residuals=True</em>, <em>acf=True</em>, <em>lagplot=True</em>, <em>histogramm=True</em><big>)</big><a class="headerlink" href="#lmfit.LMFit.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a plot of the data and the test function using current
 parameters.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -320,8 +320,8 @@ parameters.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lmfit.lmfit.report">
-<tt class="descname">report</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit.report"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.report" title="Permalink to this definition">¶</a></dt>
+<dt id="lmfit.LMFit.report">
+<tt class="descname">report</tt><big>(</big><big>)</big><a class="headerlink" href="#lmfit.LMFit.report" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints a report about the results of the last fitting procedure.</p>
 </dd></dl>
 
