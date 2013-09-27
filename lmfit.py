@@ -1,13 +1,3 @@
-#   Requirements:
-#   numpy, scipy.optimize, matplotlib
-#   Python v2.5 or later (not compatible with Python 3)
-#
-#   Version History:
-#
-#   v0.1 2013-05-21: First more or less fully functional version
-#   v0.2 2013-06-16: Clean up and restructuring of the code
-#   v1.0 2013-09-25: First stable version
-
 from __future__ import division
 from sys import stderr
 import sys
