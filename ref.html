@@ -1,0 +1,293 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lmfit Reference &mdash; lmfit 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="lmfit 1.0 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to lmfit’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to lmfit’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">lmfit 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-lmfit">
+<span id="lmfit-reference"></span><h1>lmfit Reference<a class="headerlink" href="#module-lmfit" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="lmfit.lmfit">
+<em class="property">class </em><tt class="descclassname">lmfit.</tt><tt class="descname">lmfit</tt><big>(</big><em>func</em>, <em>xdata</em>, <em>ydata</em>, <em>p0</em>, <em>yerror=None</em>, <em>lm_options={}</em>, <em>verbose=True</em>, <em>plot=False</em>, <em>plot_options={}</em><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class handling non-linear least squares fitting of 2d datasets.</p>
+<p>Based on scipy&#8217;s leastsq function lmfit implements the
+Levenberg-Marquardt-Algorithm provided by the Fortran MINPACK library.</p>
+<dl class="docutils">
+<dt>func <span class="classifier-delimiter">:</span> <span class="classifier">function-type</span></dt>
+<dd>Testfunction to be fitted.</dd>
+<dt>xdata, ydata: array-like</dt>
+<dd>Datasets with equal dimensions.</dd>
+<dt>p0 <span class="classifier-delimiter">:</span> <span class="classifier">dict or list</span></dt>
+<dd>Set of initial parameters. When passing p0 as a list the ordering
+of the parameters must be the same as in the function definition.
+So for func = lambda x, a, b: a*x + b either is possible:
+p0={&#8216;a&#8217;:1, &#8216;b&#8217;: 2} or p0=[1, 2].</dd>
+<dt>yerror <span class="classifier-delimiter">:</span> <span class="classifier">array-like, optional</span></dt>
+<dd>Weights for individual data points. Must have the same dimensions as
+x/ydata arrays.</dd>
+<dt>lm_options <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
+<dd>Options passed to scipy.optimize.leastsq. Cf. scipy reference for 
+possible options.</dd>
+<dt>verbose, plot <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Toggle verbose output (default: True) and plot window (default: False).</dd>
+<dt>plot_options <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
+<dd>Options passed to this classes plot method.</dd>
+</dl>
+<p>xdata, ydata
+func
+P 
+StdDev
+CovMatr
+Chi2
+RMSChi2
+Residuals
+full_results
+fig : class instance</p>
+<blockquote>
+<div>Instance of matplotlib&#8217;s figure class. Only available after plotting.</div></blockquote>
+<p>scipy.optimize.leastsq : Wrapper for MINPACK&#8217;s fit functions.</p>
+<dl class="attribute">
+<dt id="lmfit.lmfit.Chi2">
+<tt class="descname">Chi2</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.Chi2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.Chi2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Value of Chi^2.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lmfit.lmfit.CovMatrix">
+<tt class="descname">CovMatrix</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.CovMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.CovMatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Covariance Matrix.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lmfit.lmfit.P">
+<tt class="descname">P</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.P"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.P" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary containing the resulting fit parameters.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lmfit.lmfit.RMSChi2">
+<tt class="descname">RMSChi2</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.RMSChi2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.RMSChi2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root mean square value of Chi^2.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lmfit.lmfit.Residuals">
+<tt class="descname">Residuals</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.Residuals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.Residuals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Array containing the Residuals.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lmfit.lmfit.StdDev">
+<tt class="descname">StdDev</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.StdDev"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.StdDev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary containing the standard deviations of the resulting fit
+parameters.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lmfit.lmfit.__call__">
+<tt class="descname">__call__</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates the testfunction at x with the current set of parameters</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lmfit.lmfit.__weakref__">
+<tt class="descname">__weakref__</tt><a class="headerlink" href="#lmfit.lmfit.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of weak references to the object (if defined)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lmfit.lmfit.bootstrap">
+<tt class="descname">bootstrap</tt><big>(</big><em>n=500</em>, <em>plot=False</em><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit.bootstrap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.bootstrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a bootstrapping analysis of the Residuals.</p>
+<p>The Residuals are randomly resampled and superimposed on the fitted 
+testfunction. This artificial dataset is then fitted again and the 
+final parameters are stored. This is repeated n-times. In the end
+the mean values and standard deviations of the fit parameters from 
+all fits are calculated and returned.</p>
+<dl class="docutils">
+<dt>n <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Number of bootstrapping runs (default=500).</dd>
+<dt>plot <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Plot all fits (default=False). Be careful! Can be slow for large
+values of n.</dd>
+</dl>
+<dl class="docutils">
+<dt>Mean <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd>Mean values of the fit parameters from all bootstrap fits.</dd>
+<dt>StdDev: dict</dt>
+<dd>Standard Deviations of the fit parameters determined from all
+bootstrap fits.</dd>
+<dt>outlist <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd>List of dictionaries containing all final parameter sets from
+the bootstrap fits.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lmfit.lmfit.fit">
+<tt class="descname">fit</tt><big>(</big><em>p0</em>, <em>lm_options={}</em>, <em>verbose=True</em>, <em>plot=False</em>, <em>plot_options={}</em><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Carries out the non-linear fit.</p>
+<dl class="docutils">
+<dt>p0 <span class="classifier-delimiter">:</span> <span class="classifier">dict or list</span></dt>
+<dd>Set of initial parameters. When passing p0 as a list the ordering
+of the parameters must be the same as in the function definition.
+So for func = lambda x, a, b: a*x + b either is possible:
+p0={&#8216;a&#8217;:1, &#8216;b&#8217;: 2} or p0=[1, 2].</dd>
+<dt>yerror <span class="classifier-delimiter">:</span> <span class="classifier">array-like, optional</span></dt>
+<dd>Weights for individual data points. Must have the same dimensions as
+x/ydata arrays.</dd>
+<dt>lm_options <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
+<dd>Options passed to scipy.optimize.leastsq. Cf. scipy reference for 
+possible options.</dd>
+<dt>verbose, plot <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Toggle verbose output (default: True) and plot window
+(default: False).</dd>
+<dt>plot_options <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
+<dd>Options passed to this classes plot method.</dd>
+</dl>
+<dl class="docutils">
+<dt>FloatingPointError</dt>
+<dd>If the testfunction can be evaluated given the initial parameters.</dd>
+<dt>Exception</dt>
+<dd>If scipy.optimize.leastsq fails without raising an own exception.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lmfit.lmfit.full_results">
+<tt class="descname">full_results</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.full_results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.full_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary with all results from the fit and additional information.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lmfit.lmfit.func">
+<tt class="descname">func</tt><a class="reference internal" href="_modules/lmfit.html#lmfit.func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.func" title="Permalink to this definition">¶</a></dt>
+<dd><p>The original testfunction.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lmfit.lmfit.plot">
+<tt class="descname">plot</tt><big>(</big><em>residuals=True</em>, <em>acf=True</em>, <em>lagplot=True</em>, <em>histogramm=True</em><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a plot of the data and the test function using current
+parameters.</p>
+<dl class="docutils">
+<dt>residuals <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional      </span></dt>
+<dd>Plot the residuals</dd>
+<dt>acf <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Plot the autocorrelogramm</dd>
+<dt>lagplot <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Show a lagplot</dd>
+<dt>histogramm <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd>Plot histogramm of residuals</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lmfit.lmfit.report">
+<tt class="descname">report</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/lmfit.html#lmfit.report"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lmfit.lmfit.report" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints a report about the results of the last fitting procedure.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to lmfit&#8217;s documentation!</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ref.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to lmfit’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">lmfit 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Jörn Werdecker.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
