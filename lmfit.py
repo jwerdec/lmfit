@@ -76,7 +76,7 @@ class lmfit(object):
         # Check input
         self.__reclength = len(xdata)
         if self.__reclength != len(ydata):
-            stderr.write("ERROR: Inconsistent number of data points in xdata "
+            stderr.write("\nERROR: Inconsistent number of data points in xdata "
                          "and ydata!\n")
             return		
         if yerror == None:
@@ -84,7 +84,7 @@ class lmfit(object):
         elif self.__reclength == len(yerror):
             self.__ToMinimize = self.__WeightedResiduals
         else:
-            stderr.write("ERROR: Inconsistent number of data points in data "
+            stderr.write("\nERROR: Inconsistent number of data points in data "
                          "and yerror!\n")
             return
         # Write variables
@@ -169,27 +169,53 @@ class lmfit(object):
         return self.__StdDev
 
     def fit(self, p0, lm_options={}, verbose=True, plot=False, plot_options={}):
-        """
-  	Carries out the least squares optimization.
+        r"""
+  	Carries out the non-linear fit.
+
+        Parameters
+        ----------
+        p0 : dict or list
+            Set of initial parameters. When passing p0 as a list the ordering
+            of the parameters must be the same as in the function definition.
+            So for func = lambda x, a, b: a*x + b either is possible:
+            p0={'a':1, 'b': 2} or p0=[1, 2].
+        yerror : array-like, optional
+            Weights for individual data points. Must have the same dimensions as
+            x/ydata arrays.
+        lm_options : dict, optional
+            Options passed to scipy.optimize.leastsq. Cf. scipy reference for 
+            possible options.
+        verbose, plot : bool, optional
+            Toggle verbose output (default: True) and plot window
+            (default: False).
+        plot_options : dict, optional
+            Options passed to this classes plot method.
+        
+        Raises
+        ------
+        FloatingPointError
+            If the testfunction can be evaluated given the initial parameters.
+        Exception
+            If scipy.optimize.leastsq fails without raising an own exception.
         """
         params, self.__pNames = self.__getParams(p0)
         self.__p0 = dict(zip(self.__pNames, params))
-        np.seterr(divide='raise')
+        np.seterr(divide='raise') # make numpy raise an exception
         try:
             self.__func(self.__x, *params)
         except FloatingPointError as FPE:
-            stderr.write('\nERROR: Testfunction could not be evaluated using the\
- given initial parameters!\n(%s)\n\n' %FPE) 
+            stderr.write("\nERROR: Testfunction could not be evaluated using "
+                         "the given initial parameters!\n(%s)\n\n" %FPE) 
             print_exc(limit=2)
             return
-        	
         try:
             self.__pfinal, covx, infodict, msg, ier =\
-                leastsq(func=self.__ToMinimize, x0=params, full_output=1, **lm_options)
+                leastsq(func=self.__ToMinimize, x0=params, full_output=1,
+                        **lm_options)
         except:
-            raise Exception("An unknown error has occured in the fitting process!")
+            raise Exception("An unknown error has occured in the fitting "
+                            "process!")
             return
-
         if covx == None:
             print """
 Warning: Fit did not converge properly!
@@ -198,7 +224,6 @@ Message provided by MINPACK:
 %s
 """ % msg
             return
-
         self.__pfinalDict = dict(zip(self.__pNames, self.__pfinal))
         Chi2 = sum(self(self.__x)**2)
         VarRes = Chi2 / self.__ndf
@@ -208,11 +233,11 @@ Message provided by MINPACK:
         Residuals = self.__Residuals(self.__pfinal)
         self.__StdDev = StdDev
         self.__Res = Residuals
-        self.__results = {\
-            'Parameters': self.__pfinalDict, 'CovMatr': CovMatrix, 'Chi2': Chi2,\
-            'VarRes': VarRes, 'RMSChi2': RMSChi2, 'StdDev': StdDev, \
-            'Residuals': Residuals, 'nfev': infodict['nfev'], 'fvec': infodict['fvec'],\
-            'MINPACKMsg': msg}
+        self.__results = {
+            'Parameters': self.__pfinalDict, 'CovMatr': CovMatrix,
+            'Chi2': Chi2, 'VarRes': VarRes, 'RMSChi2': RMSChi2,
+            'StdDev': StdDev, 'Residuals': Residuals, 'nfev': infodict['nfev'],
+            'fvec': infodict['fvec'], 'MINPACKMsg': msg}
         if verbose:
         	self.report()
         if plot:
@@ -228,36 +253,61 @@ Message provided by MINPACK:
 
     @property 
     def CovMatrix(self):
+        r"""
+        The Covariance Matrix.
+        """
         return self.__results['CovMatr']
     
     @property
     def Chi2(self):
+        r"""
+        Value of Chi^2.
+        """
         return self.__results['Chi2']
 
     @property
     def RMSChi2(self):
+        r"""
+        Root mean square value of Chi^2.
+        """
         return self.__results['RMSChi2']
 
     @property
     def Residuals(self):
+        r"""
+        Array containing the Residuals.
+        """
         return self.__results['Residuals']
 
     @property
     def full_results(self):
+        r"""
+        Dictionary with all results from the fit and additional information.
+        """
         return self.__results
 
     @property
     def func(self):
+        r"""
+        The original testfunction.
+        """
         return self.__func
 
     def plot(self, residuals=True, acf=True, lagplot=True, histogramm=True):
-    	"""
-    	Creates a plot of the data and the test function using current parameters.
-    	Options:
-    		residuals  (bool):	Plot the residuals
-    		acf        (bool):		Plot the autocorrelogramm
-    		lagplot    (bool):	Show a lagplot
-    		histogramm (bool): Plot histogramm of residuals 
+    	r"""
+    	Creates a plot of the data and the test function using current
+        parameters.
+
+    	Parameters
+        ----------
+    	residuals : bool, optional	
+            Plot the residuals
+    	acf : bool, optional
+	    Plot the autocorrelogramm
+    	lagplot : bool, optional
+            Show a lagplot
+    	histogramm : bool, optional
+            Plot histogramm of residuals 
     	"""
     	# determine geometry
     	rows = 1
@@ -336,8 +386,8 @@ Message provided by MINPACK:
         plt.show(fig)
         
     def report(self):
-    	"""
-    	Prints a report about the results of the last fitting procedure
+    	r"""
+    	Prints a report about the results of the last fitting procedure.
     	"""
         if self.__results == None:
             print 'No results to report!'
@@ -370,17 +420,34 @@ Final set of parameters: %s
            self.__results['CovMatr'], pstring)
 
     def bootstrap(self, n=500, plot=False):
-        """
-        BETA!
-	Resamples the residuals and fits the data to the fitted function + resampled residuals. Then calculates the statistics for the fitting parameters.
-	n: Number of resamplings
-        n_cpu: Number of processes used by this method
-        Returns:
-            Mean: Dictionary of Mean values found for all fit parameters
-            StdDev: Dictionary of Standard Deviations for all fit parameters
-            outlist: A list with dictionaries of fit parameters from all fits 
-	"""    
+        r"""
+        Performs a bootstrapping analysis of the Residuals.
 
+        The Residuals are randomly resampled and superimposed on the fitted 
+        testfunction. This artificial dataset is then fitted again and the 
+        final parameters are stored. This is repeated n-times. In the end
+        the mean values and standard deviations of the fit parameters from 
+        all fits are calculated and returned.
+
+        Parameters
+        ----------
+        n : int, optional
+            Number of bootstrapping runs (default=500).
+        plot : bool, optional
+            Plot all fits (default=False). Be careful! Can be slow for large
+            values of n.
+
+        Returns
+        -------
+        Mean : dict
+            Mean values of the fit parameters from all bootstrap fits.
+        StdDev: dict
+            Standard Deviations of the fit parameters determined from all
+            bootstrap fits.
+        outlist : dict
+            List of dictionaries containing all final parameter sets from
+            the bootstrap fits.
+	"""    
         outlist = [i for i in range(n)]
         print 'Bootstrapping:'
         for i in outlist:
@@ -407,13 +474,13 @@ Final set of parameters: %s
             plt.show()
         return Mean, StdDev, outlist
         
-
 # TESTCODE
 if __name__ == '__main__':
     from numpy import exp, linspace, array
     from numpy.random import normal
     # Signal generating function
-    sig = lambda x, alpha, x0: x**3/(x0**3) * exp(-((x-x0)/alpha)**2) + normal(0,0.1,len(x))
+    sig = lambda x, alpha, x0: x**3/(x0**3) * exp(-((x-x0)/alpha)**2)\
+        + normal(0,0.1,len(x))
     # Test function
     testfunc = lambda x, alpha, x0: x**3.0/(x0**3.0) * exp(-((x-x0)/alpha)**2)
     # Creating a synthetic dataset
@@ -421,6 +488,7 @@ if __name__ == '__main__':
     y = sig(x=x, alpha=9.67, x0=18.47)
     # Fitting the data with the testfunction by creating an instance of 
     # the lmfit class
-    testfit = lmfit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10}, plot=True)
+    testfit = lmfit(testfunc, xdata=x, ydata=y, p0={'x0':20, 'alpha':10},
+                    plot=True)
     Mean, StdDev, outlist = testfit.bootstrap(500, plot=True)
     print Mean, StdDev
