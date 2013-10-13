@@ -439,7 +439,6 @@ Final set of parameters: %s
             the bootstrap fits.
 	"""    
         outlist = [i for i in range(n)]
-        print 'Bootstrapping:'
         for i in outlist:
             NewY = self(self.__x) + np.random.permutation(self.__Res)
             ToMinimize = lambda params: NewY - self.__func(self.__x, *params)
