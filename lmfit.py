@@ -409,7 +409,7 @@ Final set of parameters: %s
            self.__results['VarRes'], self.__results['RMSChi2'],\
            self.__results['CovMatr'], pstring)
 
-    def bootstrap(self, n=500, plot=False):
+    def bootstrap(self, n=500, plot=False, full_output=False):
         r"""
         Performs a bootstrapping analysis of the Residuals.
 
@@ -461,7 +461,9 @@ Final set of parameters: %s
             for finalDict in outlist:
                 plt.plot(x, self.__func(x, **finalDict))
             plt.show()
-        return Mean, StdDev, outlist
+	if full_output:
+        	return Mean, StdDev, outlist
+	return Mean, StdDev
         
 # TESTCODE
 if __name__ == '__main__':
