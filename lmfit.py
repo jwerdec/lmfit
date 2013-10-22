@@ -135,7 +135,7 @@ class LMFit(object):
         r"""
         Defines the function whos sum of squares is to be minimized.
         """
-        return(self.__y - self.__func(self.__x, *params)/self.__yerror)
+        return(self.__y - self.__func(self.__x, *params))/self.__yerror
 
     def __call__(self, x):
     	"""
