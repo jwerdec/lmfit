@@ -438,8 +438,10 @@ Final set of parameters: %s
             List of dictionaries containing all final parameter sets from
             the bootstrap fits.
 	"""    
+        sys.stderr.write('Bootstrapping.')
         outlist = [i for i in range(n)]
         for i in outlist:
+            sys.stderr.write('.')
             NewY = self(self.__x) + np.random.permutation(self.__Res)
             ToMinimize = lambda params: NewY - self.__func(self.__x, *params)
             pfinal, covx, infodict, msg, ier =\
