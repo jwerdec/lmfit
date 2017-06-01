@@ -206,7 +206,7 @@ class LMFit(object):
             raise Exception("An unknown error has occured in the fitting "
                             "process!")
             return
-        if covx == None:
+        if covx is None:
             print """
 Warning: Fit did not converge properly!
 
